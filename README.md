@@ -401,8 +401,9 @@ auto-submit form
 ---
 
 Not top-level:
-
-<img src="">  
+```html
+<img src="">
+``` 
 background requests  
 
 ---
