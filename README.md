@@ -111,9 +111,9 @@ How to deliver a CSRF exploit
 1) the attacker will place the malicious HTML onto a website that they control, and then induce victims to visit that website. This might be done by feeding the user a link to the website, via an email or social media message.
 
 2) some simple CSRF exploits employ the GET method and can be fully self-contained with a single URL on the vulnerable website.
-
+```html
 <img src="https://vulnerable-website.com/email/change?email=pwned@evil-user.net">
-
+```
 ---
 
 #####################################
@@ -446,9 +446,9 @@ cookies are sent in cross-site requests ONLY if:
 ### Top-level navigation examples:
 
 Click link:
-
+```html
 <a href="https://victim.com/account">My Account</a>
-
+```
 ---
 
 Type URL:
@@ -490,15 +490,15 @@ document.getElementById('f').submit();
 ## Not top-level navigation:
 
 Image request:
-
+```html
 <img src="https://victim.com/delete-account">
-
+```
 ---
 
 Background form submit:
-
+```html
 <form action="https://victim.com/change-email" method="GET">
-
+```
 ---
 
 POST requests are more likely CSRF targets.
@@ -727,9 +727,9 @@ an attacker can craft their CSRF exploit in a way that causes the victim user's 
 to achieve this : 
 
 using a META tag within the HTML page that hosts the CSRF attack:
-
+```html
 <meta name="referrer" content="never"> // this tells the browser to not send the referrer header in http request
-
+```
 ---
 
 ## Lab: CSRF where Referer validation depends on header being present
@@ -750,9 +750,9 @@ try to delete the referrer header and send the request : it worked
 so now we need to find a way to tell the user's browser to not include the referrer header in the request.
 
 using the meta tag html element 
-
+```html
 <meta name="referrer" content="never">   // this tells the browser to not send the referrer header in the request 
-
+```
 so add it inside the header element 
 ```html
 <html>
@@ -784,7 +784,7 @@ http://attacker-website.com/csrf-attack?vulnerable-website.com
 but here for  2) approach   to reduce the risk of sensitive data being leaked  browsers strip the query string from the Referer header by default.
 so to solve this problem : 
 
-1) add inside the header element <meta name="referrer" content="unsafe-url">   which tells the browser to include the full url path with its query parameters 
+1) add inside the header element ```html<meta name="referrer" content="unsafe-url">```   which tells the browser to include the full url path with its query parameters 
 
 2) in the header http request add referrer-policy: unsafe-url
 
