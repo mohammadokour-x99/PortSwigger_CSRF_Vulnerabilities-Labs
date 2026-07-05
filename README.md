@@ -754,7 +754,7 @@ using the meta tag html element
 <meta name="referrer" content="never">   // this tells the browser to not send the referrer header in the request 
 
 so add it inside the header element 
-
+```html
 <html>
   <header><meta name="referrer" content="never"></header>
   <body>
@@ -768,7 +768,7 @@ so add it inside the header element
     </script>
   </body>
 </html>
-
+```
 ---
 
 ## Validation of Referer can be circumvented
