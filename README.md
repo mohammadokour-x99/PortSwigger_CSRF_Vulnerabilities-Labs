@@ -817,6 +817,7 @@ so now we need to :
 
 2) use meta tag to tell the browser to include the full url path including its string query parameters 
 
+```html
 <html>
   <head><meta name="referrer" content="unsafe-url"></head>
   <body>
@@ -830,3 +831,4 @@ so now we need to :
     </script>
   </body>
 </html>
+```
